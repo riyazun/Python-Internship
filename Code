@@ -1,0 +1,179 @@
+#Team Formation Tool :
+# • CRUD: Player profiles.
+# • create_team_rosters(team_id): Assist in creating balanced team rosters based on player skills and statistics.
+# • track_team_formation_changes(change_data): Track changes and updates to team formations.
+
+# Code:
+# To tackle this problem statement effectively, we'll structure our solution into the following core components:
+
+# 1. **Player Class**: Represents a player profile with methods for creation, reading, updating, and deleting profiles.
+# 2. **Team Class**: Manages team rosters and operates on a collection of Player objects.
+# 3. **FormationTracker Class**: Tracks and records changes in team formations.
+# 4. **RosterBalancer Algorithm**: Algorithm for balancing teams based on player skills and statistics.
+
+# Here is the complete Python code implementing these functionalities:
+
+from typing import List, Dict
+
+class Player:
+    def __init__(self, player_id: int, name: str, skill_level: int):
+        self.player_id = player_id
+        self.name = name
+        self.skill_level = skill_level
+
+    def __str__(self):
+        return f"{self.name} (Skill Level: {self.skill_level})"
+
+    def update_profile(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+class Team:
+    def __init__(self, team_id: int):
+        self.team_id = team_id
+        self.players = []
+
+    def add_player(self, player: Player):
+        if player not in self.players:
+            self.players.append(player)
+
+    def remove_player(self, player_id: int):
+        self.players = [player for player in self.players if player.player_id != player_id]
+
+    def get_average_skill(self):
+        total_skill = sum(player.skill_level for player in self.players)
+        return total_skill / len(self.players) if self.players else 0
+
+    def __str__(self):
+        return f"Team {self.team_id} with players: {[str(player) for player in self.players]}"
+
+class FormationTracker:
+    def __init__(self):
+        self.changes = []
+
+    def record_change(self, team_id: int, change_data: str):
+        self.changes.append((team_id, change_data))
+
+    def get_changes(self):
+        return self.changes
+
+class RosterBalancer:
+    def create_balanced_teams(self, players: List[Player], num_teams: int) -> Dict[int, Team]:
+        teams = {i: Team(i) for i in range(num_teams)}
+        sorted_players = sorted(players, key=lambda x: x.skill_level, reverse=True)
+
+        for i, player in enumerate(sorted_players):
+            teams[i % num_teams].add_player(player)
+
+        return teams
+
+def display_menu():
+    print("\nMenu:")
+    print("1. Create Player")
+    print("2. Create Team")
+    print("3. Add Player to Team")
+    print("4. Remove Player from Team")
+    print("5. Display Team Average Skill")
+    print("6. Display All Changes")
+    print("7. Create Balanced Teams")
+    print("8. Exit")
+
+def main():
+    players = []
+    teams = {}
+    tracker = FormationTracker()
+    balancer = RosterBalancer()
+
+    while True:
+        display_menu()
+        choice = input("Choose an option: ")
+
+        if choice == '1':
+            try:
+                player_id = int(input("Enter player ID: "))
+                name = input("Enter player name: ")
+                skill_level = int(input("Enter player skill level: "))
+                player = Player(player_id, name, skill_level)
+                players.append(player)
+                print(f"Player created: {player}")
+            except ValueError:
+                print("Invalid input. Please enter numeric values for ID and skill level.")
+
+        elif choice == '2':
+            try:
+                team_id = int(input("Enter team ID: "))
+                if team_id not in teams:
+                    teams[team_id] = Team(team_id)
+                    print(f"Team {team_id} created.")
+                else:
+                    print("Team ID already exists.")
+            except ValueError:
+                print("Invalid input. Please enter a numeric value for team ID.")
+
+        elif choice == '3':
+            try:
+                team_id = int(input("Enter team ID to add player to: "))
+                player_id = int(input("Enter player ID to add: "))
+                player = next((p for p in players if p.player_id == player_id), None)
+                if player and team_id in teams:
+                    teams[team_id].add_player(player)
+                    tracker.record_change(team_id, f"Added player {player_id}")
+                    print(f"Player {player.name} added to Team {team_id}.")
+                else:
+                    print("Player or Team not found.")
+            except ValueError:
+                print("Invalid input. Please enter numeric values for IDs.")
+
+        elif choice == '4':
+            try:
+                team_id = int(input("Enter team ID to remove player from: "))
+                player_id = int(input("Enter player ID to remove: "))
+                if team_id in teams:
+                    teams[team_id].remove_player(player_id)
+                    tracker.record_change(team_id, f"Removed player {player_id}")
+                    print(f"Player {player_id} removed from Team {team_id}.")
+                else:
+                    print("Team not found.")
+            except ValueError:
+                print("Invalid input. Please enter numeric values for IDs.")
+
+        elif choice == '5':
+            try:
+                team_id = int(input("Enter team ID to display average skill: "))
+                if team_id in teams:
+                    average_skill = teams[team_id].get_average_skill()
+                    print(f"Average skill for Team {team_id}: {average_skill:.2f}")
+                else:
+                    print("Team not found.")
+            except ValueError:
+                print("Invalid input. Please enter a numeric value for team ID.")
+
+        elif choice == '6':
+            changes = tracker.get_changes()
+            print("Formation Changes:")
+            for change in changes:
+                print(f"Team {change[0]}: {change[1]}")
+
+        elif choice == '7':
+            try:
+                num_teams = int(input("Enter number of teams to create: "))
+                if num_teams > 0:
+                    balanced_teams = balancer.create_balanced_teams(players, num_teams)
+                    for team in balanced_teams.values():
+                        print(team)
+                else:
+                    print("Number of teams must be positive.")
+            except ValueError:
+                print("Invalid input. Please enter a numeric value for the number of teams.")
+
+        elif choice == '8':
+            print("Exiting...")
+            break
+
+        else:
+            print("Invalid option. Please try again.")
+
+if __name__ == '__main__':
+    main()
+
+
